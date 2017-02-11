@@ -1,7 +1,7 @@
 import pickle
 import os
 
-VERSION_NUMBER = "0.3"
+VERSION_NUMBER = "1.0"
 WORD_LIST = "/usr/share/dict/words"
 DICT_FILE_NAME = "worddict-" + VERSION_NUMBER + ".p"
 
