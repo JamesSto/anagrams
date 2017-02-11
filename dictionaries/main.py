@@ -2,8 +2,9 @@ from create_dict import create_dict, DICT_FILE_NAME
 import pickle
 import json
 from string import ascii_lowercase
-from sys import argv
+from sys import argv, stdin
 import itertools
+import argparse
 
 
 def combos(letter, target_list):
@@ -26,22 +27,25 @@ if __name__ == "__main__":
     with open(DICT_FILE_NAME, 'r') as dict_file:
         d = pickle.load(dict_file)
 
-    if len(argv) > 1:
-        if argv[1].endswith(".json"):
-            with open(argv[1], 'r') as target_json:
-                target_json = json.loads(target_json.read())
-                target_list = target_json["found_targets"]
-                max_unknowns = target_json["max_unknowns"]
-                memo = {}
-                solutions = set()
-                for _ in xrange(max_unknowns):
-                    for x in get_combinations(target_list):
-                        s = "".join(sorted(x))
-                        if s in d:
-                            for word in d[s]:
-                                if word not in solutions:
-                                    print word
-                                    solutions.add(word)
-                    target_list.append(ascii_lowercase)
-        else:
-            word = argv[1]
+    parser = argparse.ArgumentParser("Finds possible anagrams given found targets and possible targets still existing")
+    parser.add_argument('target_json', 
+                        nargs='?', 
+                        type=argparse.FileType('r'), 
+                        default=stdin, 
+                        help="JSON file representing the targets found and expected")
+    args = parser.parse_args()
+
+    target_json = json.loads(args.target_json.read())
+    target_list = target_json["found_targets"]
+    max_unknowns = target_json["max_unknowns"]
+    memo = {}
+    solutions = set()
+    for _ in xrange(max_unknowns):
+        for x in get_combinations(target_list):
+            s = "".join(sorted(x))
+            if s in d:
+                for word in d[s]:
+                    if word not in solutions:
+                        print word
+                        solutions.add(word)
+        target_list.append(ascii_lowercase)
