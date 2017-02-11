@@ -1,0 +1,3 @@
+# Simulated Annealing Anagram Solver
+
+Generates a trigram model based on training data of trigram letter frequency. It then uses this as the basis for a simulated annealing algorithm, giving each node a score of its probability. Unfortunately, this ran into issues - longer words are inherently worse so adding spaces was a large challenge. Plus, there's a constant time anagram finding algorithm, so fancy AI techniques aren't really the right way to go here. Still, it was fun.
