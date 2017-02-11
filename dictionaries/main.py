@@ -3,7 +3,6 @@ import pickle
 import json
 from string import ascii_lowercase
 from sys import argv
-from tqdm import tqdm
 import itertools
 
 
@@ -34,13 +33,15 @@ if __name__ == "__main__":
                 target_list = target_json["found_targets"]
                 max_unknowns = target_json["max_unknowns"]
                 memo = {}
-                solutions = []
-                for _ in tqdm(xrange(max_unknowns)):
+                solutions = set()
+                for _ in xrange(max_unknowns):
                     for x in get_combinations(target_list):
                         s = "".join(sorted(x))
                         if s in d:
-                            solutions += d[s]
+                            for word in d[s]:
+                                if word not in solutions:
+                                    print word
+                                    solutions.add(word)
                     target_list.append(ascii_lowercase)
-                print set(solutions)
         else:
             word = argv[1]
