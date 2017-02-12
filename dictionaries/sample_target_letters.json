@@ -1,4 +1,4 @@
 {
-    "found_targets" : ["asd", "idr", "eqsa", "d"],
-    "max_unknowns" : 3
+    "found_targets" : ["c", "y", "b", "e", "r", "s", "e", "c", "u", "r", "i", "t", "y"],
+    "max_unknowns" : 0
 }

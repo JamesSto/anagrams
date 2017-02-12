@@ -3,9 +3,14 @@ import pickle
 import json
 from string import ascii_lowercase
 from sys import stdin
+from tqdm import tqdm
 import itertools
 import argparse
 
+MAX_DEPTH = 2
+
+def calc_entropy(target_list):
+    return reduce(lambda x,y : x*y, map(len, target_list), 1)
 
 def combos(letter, target_list):
     for x in get_combinations(target_list[1:]):
@@ -22,35 +27,32 @@ def get_combinations(target_list):
 
     return combinations
 
-def get_anagrams(target_list):
+def get_anagrams(target_list, d, spaces=False, depth=0):
     solutions = set()
-    for x in get_combinations(target_list):
+    # Only show the progress bar if we're not in a recursive call and it's going to take long enough that it'll be worth showing
+    if depth == 0 and calc_entropy(target_list) > 1000:
+        looper = tqdm(get_combinations(target_list), total=calc_entropy(target_list))
+    else:
+        looper = get_combinations(target_list)
+    for x in looper:
         s = "".join(sorted(x))
-        if s in d:
-            for word in d[s]:
-                solutions.add(word)
-    return solutions
-
-def get_anagrams_with_spaces(target_list):
-    if len(target_list) == 1:
-        return set()
-    solutions = set()
-    # After going halfway through, we're just generating the same combinations but reversed
-    # We can rely on the user to distinguish them at the point
-    for n in xrange(1, (len(target_list)+1)/2+1):
-        # We want to put the space everywhere it can go, so we split up the list in every single possible way it can
-        # be split into two groups (between this loop and the above)
-        for sub in itertools.combinations(target_list, n):
-            sub = list(sub)
-            # Create "the other half" of the targets
-            remainder = list(target_list)
-            for item in sub:
-                remainder.remove(item)
-            sub_anagrams = get_anagrams_with_spaces(sub) | get_anagrams(sub)
-            remainder_anagrams = get_anagrams_with_spaces(remainder) | get_anagrams(remainder)
-            for w1 in sub_anagrams:
-                for w2 in remainder_anagrams:
-                    solutions.add(w1 + " " + w2)
+        if not spaces or len(s) == 1 or depth >= MAX_DEPTH:
+            if s in d:
+                for word in d[s]:
+                    solutions.add(word)
+        else:
+            for n in xrange(1, (len(target_list)+1)/2+1):
+                for sub in itertools.combinations(s, n):
+                    sub = list(sub)
+                    # Create "the other half" of the targets
+                    remainder = list(s)
+                    for item in sub:
+                        remainder.remove(item)
+                    sub_anagrams = get_anagrams(sub, d, spaces=True, depth=depth+1) | get_anagrams(sub, d, depth=1)
+                    remainder_anagrams = get_anagrams(remainder, d, spaces=True, depth=depth+1) | get_anagrams(remainder, d, depth=1)
+                    for w1 in sub_anagrams:
+                        for w2 in remainder_anagrams:
+                            solutions.add(w1 + " " + w2)
     return solutions
 
 if __name__ == "__main__":
@@ -76,11 +78,9 @@ if __name__ == "__main__":
     max_unknowns = target_json["max_unknowns"]
     
     for _ in xrange(max_unknowns+1):
-        if not args.spaces:
-            anagrams = get_anagrams(target_list)
-        else:
-            anagrams = get_anagrams_with_spaces(target_list) | get_anagrams(target_list)
-
+        anagrams = get_anagrams(target_list, d)
+        if args.spaces:
+            anagrams |= get_anagrams(target_list, d, spaces=True) 
         for ana in anagrams:
             print ana
         target_list.append(ascii_lowercase)
