@@ -1,8 +1,8 @@
 import pickle
 import os
 
-VERSION_NUMBER = "1.0"
-WORD_LIST = "/usr/share/dict/words"
+VERSION_NUMBER = "1.1"
+WORD_LIST = "words.txt"
 DICT_FILE_NAME = "worddict-" + VERSION_NUMBER + ".p"
 
 def create_dict():
