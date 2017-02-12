@@ -27,7 +27,9 @@ def get_combinations(target_list):
 
     return combinations
 
-def get_anagrams(target_list, d, spaces=False, depth=0):
+def get_anagrams(target_list, d, spaces=False, depth=0, memo=None):
+    if not memo:
+        memo = {}
     solutions = set()
     # Only show the progress bar if we're not in a recursive call and it's going to take long enough that it'll be worth showing
     if depth == 0 and calc_entropy(target_list) > 1000:
@@ -36,23 +38,30 @@ def get_anagrams(target_list, d, spaces=False, depth=0):
         looper = get_combinations(target_list)
     for x in looper:
         s = "".join(sorted(x))
-        if not spaces or len(s) == 1 or depth >= MAX_DEPTH:
-            if s in d:
-                for word in d[s]:
-                    solutions.add(word)
+        if s in memo:
+            solutions |= memo[s]
         else:
-            for n in xrange(1, (len(target_list)+1)/2+1):
-                for sub in itertools.combinations(s, n):
-                    sub = list(sub)
-                    # Create "the other half" of the targets
-                    remainder = list(s)
-                    for item in sub:
-                        remainder.remove(item)
-                    sub_anagrams = get_anagrams(sub, d, spaces=True, depth=depth+1) | get_anagrams(sub, d, depth=1)
-                    remainder_anagrams = get_anagrams(remainder, d, spaces=True, depth=depth+1) | get_anagrams(remainder, d, depth=1)
-                    for w1 in sub_anagrams:
-                        for w2 in remainder_anagrams:
-                            solutions.add(w1 + " " + w2)
+            if not spaces or len(s) == 1 or depth >= MAX_DEPTH:
+                if s in d:
+                    memo[s] = set(d[s])
+                    solutions.update(d[s])
+            else:
+                for n in xrange(1, (len(target_list)+1)/2+1):
+                    for sub in itertools.combinations(s, n):
+                        sub = list(sub)
+                        # Create "the other half" of the targets
+                        remainder = list(s)
+                        for item in sub:
+                            remainder.remove(item)
+                        sub_anagrams = get_anagrams(sub, d, spaces=True, depth=depth+1, memo=memo) | get_anagrams(sub, d, depth=1)
+                        remainder_anagrams = get_anagrams(remainder, d, spaces=True, depth=depth+1, memo=memo) | get_anagrams(remainder, d, depth=1)
+                        new_sols = set()
+                        for w1 in sub_anagrams:
+                            for w2 in remainder_anagrams:
+                                new_sols.add(w1 + " " + w2)
+                        memo[s] = new_sols
+                        solutions |= new_sols
+
     return solutions
 
 if __name__ == "__main__":
@@ -80,7 +89,8 @@ if __name__ == "__main__":
     for _ in xrange(max_unknowns+1):
         anagrams = get_anagrams(target_list, d)
         if args.spaces:
-            anagrams |= get_anagrams(target_list, d, spaces=True) 
+            memo = {}
+            anagrams |= get_anagrams(target_list, d, spaces=True, memo=memo) 
         for ana in anagrams:
             print ana
         target_list.append(ascii_lowercase)
