@@ -1,7 +1,7 @@
 import pickle
 import os
 
-VERSION_NUMBER = "2.1"
+VERSION_NUMBER = "3.1"
 WORD_LIST = "words.txt"
 DICT_FILE_NAME = "worddict-" + VERSION_NUMBER + ".p"
 
@@ -12,10 +12,11 @@ def create_dict():
 
         d = {}
         for word in words:
-            if word not in d:
-                d["".join(sorted(word))] = [word]
+            sorted_word = "".join(sorted(word))
+            if sorted_word not in d:
+                d[sorted_word] = [word]
             else:
-                d["".join(sorted(word))].append(word)
+                d[sorted_word].append(word)
 
         with open(DICT_FILE_NAME, 'w') as outfile:
             pickle.dump(d, outfile)

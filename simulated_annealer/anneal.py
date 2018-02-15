@@ -1,10 +1,11 @@
 from __future__ import division
 from simanneal import Annealer
 from random import shuffle, randrange, random
+from math import log
 
 class AnagramSolver(Annealer):
 
-    SPACE_FREQUENCY = .05
+    SPACE_FREQUENCY = .0001
 
     def __init__(self, model, letters, found_words):
         # This way we can take in basically any iterable
@@ -14,8 +15,9 @@ class AnagramSolver(Annealer):
         self.found_words = found_words
         # Start from a random position to remove any biases and make this more apt to multi-threading
         shuffle(self.state)
-        with open("/usr/share/dict/words", 'r') as f:
-            self.words = set(f.read().lower().split())
+        with open("../words.txt", 'r') as f:
+            self.words = set(x for x in f.read().lower().split() if len(x) > 2)
+            self.words.update(['a', 'i', "of", "to", "in", "it", "is", "be", "as", "at", "so", "we", "he", "by", "or", "on", "do", "if", "me", "my", "up", "an", "go", "no", "us", "am"])
 
 
     def move(self):
@@ -24,24 +26,26 @@ class AnagramSolver(Annealer):
         if it is one. We're not looking for a global minima, we're looking for lots of low values'''
 
         # Movement in our case is going to be swapping two random letters
-        if random() > AnagramSolver.SPACE_FREQUENCY * ((self.num_letters - self.state.count(" "))/len(self.state)):
+        r = random()
+        if r > AnagramSolver.SPACE_FREQUENCY:
             x = randrange(len(self.state))
             y = randrange(len(self.state))
             self.state[x], self.state[y] = self.state[y], self.state[x]
+        elif r > AnagramSolver.SPACE_FREQUENCY / 2 and " " in self.state:
+            self.state.remove(" ")
         else:
             self.state.insert(randrange(len(self.state)), " ")
 
-        word = "".join(self.state)
-        if all(w in self.words for w in word.split()):
+        word = tuple(sorted("".join(self.state).split()))
+        if all(w in self.words for w in word):
             self.found_words.add(word)
 
     def energy(self):
-        '''Calculates the cost function on a state - how close our model thinks it is to a word. We
-        do 1 - probability because we're doing minimization'''
+        '''Calculates the cost function on a state - how close our model thinks it is to a word.
+        The increased length generally punishes longer words, meaning punishing additional spaces'''
         token = self.state
         probability = 0
         for letters in zip(token, token[1:], token[2:]):
-            probability += self.model.get_probability(letters)
-        probability = probability/len(self.state)
+            probability += -log(self.model.get_probability(letters))
 
-        return (1/probability)
+        return probability

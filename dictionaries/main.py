@@ -7,7 +7,7 @@ from tqdm import tqdm
 import itertools
 import argparse
 
-MAX_DEPTH = 2
+MAX_DEPTH = 1
 
 def calc_entropy(target_list):
     return reduce(lambda x,y : x*y, map(len, target_list), 1)
